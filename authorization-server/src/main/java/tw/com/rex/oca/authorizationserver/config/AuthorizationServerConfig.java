@@ -15,12 +15,15 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.A
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
+import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.TokenGranter;
 import org.springframework.security.oauth2.provider.client.JdbcClientDetailsService;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.RedisAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
@@ -48,6 +51,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         log.info("start configure clients");
+        // client 資料存在 DB
         clients.withClientDetails(new JdbcClientDetailsService(dataSource));
     }
 
@@ -90,9 +94,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     private TokenGranter tokenGranter(final AuthorizationServerEndpointsConfigurer endpoints) {
         List<TokenGranter> granters = new ArrayList<>(Collections.singletonList(endpoints.getTokenGranter()));
 
-        // AuthorizationServerTokenServices tokenServices = endpoints.getTokenServices();
-        // ClientDetailsService clientDetailsService = endpoints.getClientDetailsService();
-        // OAuth2RequestFactory requestFactory = endpoints.getOAuth2RequestFactory();
+        AuthorizationServerTokenServices tokenServices = endpoints.getTokenServices();
+        ClientDetailsService clientDetailsService = endpoints.getClientDetailsService();
+        OAuth2RequestFactory requestFactory = endpoints.getOAuth2RequestFactory();
 
         // List<TokenGranter> granters = new ArrayList<>();
 
@@ -106,7 +110,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         // granters.add(new ClientCredentialsTokenGranter(tokenServices, clientDetailsService, requestFactory));
         // // refresh token
         // granters.add(new RefreshTokenGranter(tokenServices, clientDetailsService, requestFactory));
-        // fixme 增加自定義驗證
+        // 自定義驗證
+        granters.add(new CustomTokenGranter(tokenServices, clientDetailsService, requestFactory, authenticationManager));
 
         return new CompositeTokenGranter(granters);
     }
@@ -148,9 +153,13 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         return "JWT_KEY";
     }
 
+    /**
+     * 監聽驗證成功事件
+     *
+     * @param event AuthenticationSuccessEvent
+     */
     @EventListener
     public void authenticationSuccessListener(AuthenticationSuccessEvent event) {
-        // 監聽驗證成功事件
         log.info("authentication success, event object: [{}]", event);
     }
 
