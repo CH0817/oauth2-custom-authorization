@@ -44,13 +44,17 @@ insert Client SQL
 
 ```sql
 -- my-client-1
+delete from oauth_client_details where client_id = 'my-client-1';
+
 insert into oauth_client_details (client_id, resource_ids, client_secret, scope, authorized_grant_types,
                                   web_server_redirect_uri, authorities, access_token_validity, refresh_token_validity)
 values ('my-client-1', 'my-resource-1,my-resource-2',
         '$argon2id$v=19$m=4096,t=3,p=1$nCbULAX68aldvbkUl5X02w$QxW73hL6RpkCoykRAmWcBFTfyw/gKYKRqd62Iau2QuQ',
-        'test-client-1', 'authorization_code,password,implicit,client_credentials,refresh_token', 'https://www.google.com', 'ROLE_ADMIN,ROLE_USER',
+        'test-client-1', 'authorization_code,password,implicit,client_credentials,refresh_token,custom', 'https://www.google.com', 'ROLE_ADMIN,ROLE_USER',
         6000, 6000);
 -- my-client-2
+delete from oauth_client_details where client_id = 'my-client-2';
+
 insert into oauth_client_details (client_id, resource_ids, client_secret, scope, authorized_grant_types,
                                   web_server_redirect_uri, authorities, access_token_validity, refresh_token_validity)
 values ('my-client-2', 'my-resource-2',
@@ -74,7 +78,9 @@ create table user_info
 insert user information SQL
 
 ```sql
+delete from user_info where id = 'test_user';
+
 insert into user_info (id, username, password, mobile)
-values (UUID(), 'rex',
+values ('test_user', 'rex',
         '$argon2id$v=19$m=4096,t=3,p=1$YE9siItcoEaIb9LdHWnP5g$MbdFYyV1sd+5ZhlhDWGWBOCuGFhUN31XrcQQp8r622s', '099999999')
 ```
